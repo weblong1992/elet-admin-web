@@ -8,6 +8,7 @@
     <div class="con">
       <el-form
         :inline="true"
+        :rules="rules"
         :model="formInline"
         label-width="100px"
         size="mini"
@@ -137,16 +138,29 @@
             </div>
 
             <div class="item">
-              <el-form-item label="通讯地址">
-                <el-select v-model="formInline.region" placeholder="活动区域">
-                  <el-option label="区域一" value="shanghai"></el-option>
-                  <el-option label="区域二" value="beijing"></el-option>
-                </el-select>
+              <el-form-item
+                label="通讯地址"
+                prop="address"
+                v-model="formInline.address"
+              >
+                <checkAddress
+                  ref="address"
+                  v-model="formInline.address"
+                  :form="formInline.address"
+                />
               </el-form-item>
             </div>
           </div>
 
-          <div class="info_right">上传</div>
+          <div class="info_right">
+            <img :src="formInline.img" alt="" />
+
+            <input
+              @change="uploadPhoto($event)"
+              type="file"
+              class="kyc-passin"
+            />
+          </div>
         </div>
 
         <div class="tip">
@@ -195,12 +209,16 @@
 
     <span slot="footer" class="dialog-footer">
       <el-button @click="closeDia">取 消</el-button>
-      <el-button type="primary">确 定</el-button>
+      <el-button type="primary" @click="onSubmit">确 定</el-button>
     </span>
   </el-dialog>
 </template>
 <script>
+import checkAddress from "@/components/checkAddress/checkAddress.vue";
 export default {
+  components: {
+    checkAddress,
+  },
   props: {
     show: {
       type: Boolean,
@@ -221,21 +239,75 @@ export default {
       },
     },
   },
+  watch: {
+    formInline: {
+      // deep: true,
+      handler() {
+        this.formInline.address = this.$refs.address.form;
+        console.log(this.formInline.address);
+      },
+    },
+  },
   data() {
     return {
       formInline: {
+        img: "", //
         user: "",
         region: "",
+        address: {
+          // 省
+          province: "",
+          // 市
+          city: "",
+          // 区
+          district: "",
+          //详细地址
+          detail: "",
+        },
+      },
+      rules: {
+        address: [
+          { required: true, validator: this.validatePass, trigger: "blur" },
+        ],
       },
     };
   },
   methods: {
+    validatePass(rule, value, callback) {
+      if (
+        this.formInline.address.province == "" ||
+        this.formInline.address.detail == ""
+      ) {
+        callback(new Error("请输入完整地址"));
+      }
+      callback();
+    },
     onSubmit() {
+      console.log(this.formInline.address);
+
       console.log("submit!");
     },
     closeDia() {
       this.dialogVisible = false;
       this.$emit("cancelFn");
+    },
+    uploadPhoto(e) {
+      // 利用fileReader对象获取file
+      let file = e.target.files[0];
+      let filesize = file.size;
+      let filename = file.name;
+      // 2,621,440   2M
+      if (filesize > 2101440) {
+        // 图片大于2MB
+      }
+      let reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (e) => {
+        // 读取到的图片base64 数据编码 将此编码字符串传给后台即可
+        let imgcode = e.target.result;
+        this.formInline.img = imgcode;
+        console.log(this.formInline.img);
+      };
     },
   },
 };
@@ -256,6 +328,15 @@ export default {
   }
   .info {
     display: flex;
+
+    .info_right {
+      // width: 200px;
+      // height: 200px;
+      // display: flex;
+      // justify-content: center;
+      // align-items: center;
+      // background-color: aqua;
+    }
   }
 }
 </style>
